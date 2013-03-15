@@ -10,7 +10,7 @@ class Seq:
 		self.__grille.append(element)
 
 	def __getLen(self):
-		return(len(self.__grille))
+		return(len(self.__grille),len(self.__grille[0]))
 
 	def __getGrille(self):
 		return(self.__grille)
@@ -27,10 +27,14 @@ class Seq:
 	def __getIndexSolution(self,grille):
 		return(self.__solution.index(grille))
 
-	def __trouve(self):
+	def __trouveMax(self):
 		maxima=[]
-		for i in range(self.__getLen()):
-			maximum=max(self.__getGrille[i])
+		for i in range(self.__getLen()[0]):
+			lineTmp=self.__getGrille()[i][:]
+			for j in lineTmp:
+				if (j.isalpha()):
+					lineTmp[lineTmp.index(j)]="0"
+			maximum=max(lineTmp)
 			maxima.append((maximum,i))
 		maximum,i=max(maxima)
 		j=self.__getGrille()[i].index(maximum)
@@ -44,7 +48,8 @@ class Seq:
 					steps.append()
 
 	def __isSolutionFound(self,grille):
-		for i in grille:
+		res=False
+		for i in grille[0]:
 			if ("x" not in i):
 				res=True
 			if (res==False):
@@ -53,29 +58,40 @@ class Seq:
 
 
 
-	def __checkDirections(self,grille):
-		if (self.__isSolutionFound(grille)): return
-		numeroGrille=self.__getSolution().index(grille)
-		del self.__getSolution()[numeroGrille]
+	def __checkDirections(self,infoGrille):
+		if (self.__isSolutionFound(infoGrille)): return
+		nextSolution = []
 		for i in [0,1,-1]:
 			for j in [0,1,-1]:
 				if (abs(i)!=abs(j)):
-					length=self.__getLen()
-					departI,departJ=grille[1]
+					lengthI, lengthJ=self.__getLen()
+					extreme,departI,departJ=infoGrille[1]
 					nextI=departI+i
 					nextJ=departJ+j
-					grille=grille[0]
-					if(0<=nextI<=length and 0<=nextJ<=length and (grille[nextI][nextJ]==str(int(extreme)-1) or grille[nextI][nextJ]=="x")):
-						self.__appendSolution((grille,(nextI,nextJ)))
-						self.__changeSolution(-1,nextI,nextJ,str(int(extreme)-1))
+					grille=[]
+					for line in infoGrille[0]:
+						grille.append(line[:])
+					if(0<=nextI<=lengthI-1 and 0<=nextJ<=lengthJ-1):
+						if(grille[nextI][nextJ]==str(int(extreme)-1) or grille[nextI][nextJ]=="x"):
+							nextSolution.append((grille,(str(int(extreme)-1),nextI,nextJ)))
+							self.__changeSolution(-1,nextI,nextJ,str(int(extreme)-1))
+		return nextSolution
 
 	def chargerGrille(self,nomDuFichier):
 		fichier=open(nomDuFichier+".txt", "r")
 		line=fichier.readline()
+		if('\n' in line):
+				line = line[:-1]
 		while (line!=""):
-			self.__appendGrille(line.split(", "))
+			if('\n' in line):
+				line = line[:-1]
+			line=line.split(" , ")
+			self.__appendGrille(line)
 			line=fichier.readline()
-			
+
+		print(self.__grille)
+
+
 
 	def solutionExiste(self):
 		for grille in self.__getSolution():
@@ -83,18 +99,25 @@ class Seq:
 		return(True)		
 
 	def trouvePuits(self):
-		self.__appendSolution(self.__getGrille(),)
+		maximum=self.__trouveMax()
+		self.__appendSolution((self.__getGrille(),maximum))
 		while(not self.solutionExiste()):
-			for grille in self.__getSolution():
-				self.__checkDirections(grille)
+			nextStep = None
+			for i in self.__solution:
+				nextStep.append(self.__checkDirections(i))
+			if(nextStep == []):
+				break
+			else:
+				self.__solution, nextStep = nextStep, self.__solution
 
 	def afficheSolution(self):
 		for grille in self.__getSolution():
 			for line in grille[0]:
 				print(line)
+			print("-------------------------------------------")
 
 if (__name__=="__main__"):
 	objects=Seq()
-	objects.chargerGrille("grille1")
+	objects.chargerGrille("grille2")
 	objects.trouvePuits()
 	objects.afficheSolution()
